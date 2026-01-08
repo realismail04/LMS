@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { FaGraduationCap, FaArrowRight, FaGoogle, FaGithub, FaFingerprint, FaEye, FaEyeSlash } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
 
@@ -8,10 +11,19 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectUrl = searchParams.get('redirect');
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') navigate('/admin');
+            else if (user.role === 'instructor') navigate('/instructor');
+            else navigate('/student/progress');
+        }
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

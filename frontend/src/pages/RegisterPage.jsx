@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { FaGraduationCap, FaChalkboardTeacher, FaArrowRight, FaFingerprint, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -13,10 +13,19 @@ const RegisterPage = () => {
     const [role, setRole] = useState('student');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const { register } = useAuth();
+    const { register, user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirectUrl = searchParams.get('redirect');
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') navigate('/admin');
+            else if (user.role === 'instructor') navigate('/instructor');
+            else navigate('/student/progress');
+        }
+    }, [user, navigate]);
 
     const validateForm = () => {
         if (name.length < 2) {
