@@ -8,37 +8,33 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(express.json());
-// CORS Configuration
-const corsOptions = {
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Subdomain', 'X-Tenant-Id'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
 // Health Check Route (Before Tenant Middleware)
-app.get('/api/health', async (req, res) => {
+app.get('/api/header-health', (req, res) => {
+    res.json({
+        headers: req.headers,
+        host: req.get('host')
+    });
+});
+
+// Ensure DB is connected for every request (Middleware) - MOVED TO TOP
+app.use(async (req, res, next) => {
     try {
-        if (mongoose.connection.readyState === 0) {
-            await connectDB();
-        }
-        res.json({
-            status: 'ok',
-            timestamp: new Date(),
-            env: process.env.NODE_ENV,
-            mongo: mongoose.connection.readyState,
-            mongoUriSet: !!process.env.MONGO_URI
-        });
+        await connectDB();
+        next();
     } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        console.error("Database connection failure:", error);
+        res.status(500).json({ message: "Database connection failed.", error: error.message });
     }
+});
+
+app.get('/api/health', async (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date(),
+        env: process.env.NODE_ENV,
+        mongo: mongoose.connection.readyState,
+        mongoUriSet: !!process.env.MONGO_URI
+    });
 });
 
 const { tenantHandler } = require('./middleware/tenantMiddleware');
@@ -93,16 +89,7 @@ const connectDB = async () => {
     return cached.conn;
 };
 
-// Ensure DB is connected for every request (Middleware)
-app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (error) {
-        console.error("Database connection failure:", error);
-        res.status(500).json({ message: "Database connection failed.", error: error.message });
-    }
-});
+
 
 // Routes
 app.use('/api/tenants', require('./routes/tenantRoutes'));
