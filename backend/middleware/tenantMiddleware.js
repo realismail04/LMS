@@ -61,7 +61,11 @@ const tenantHandler = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('Tenant Middleware Error:', error);
-        res.status(500).json({ message: 'Error resolving tenant' });
+        res.status(500).json({
+            message: 'Error resolving tenant',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
