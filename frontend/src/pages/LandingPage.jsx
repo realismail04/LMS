@@ -1,13 +1,15 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { FaGraduationCap, FaChalkboardTeacher, FaRocket, FaGlobe, FaShieldAlt, FaArrowRight, FaStar, FaPlay, FaUsers, FaCheckCircle, FaQuoteLeft, FaPlus, FaMinus, FaBars, FaTimes } from 'react-icons/fa';
+import { FaGraduationCap, FaChalkboardTeacher, FaRocket, FaGlobe, FaShieldAlt, FaArrowRight, FaStar, FaPlay, FaUsers, FaCheckCircle, FaQuoteLeft, FaPlus, FaMinus, FaBars, FaTimes, FaUserCircle } from 'react-icons/fa';
 import { useState } from 'react';
 import { useCourse } from '../context/CourseContext';
+import { useAuth } from '../context/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
 
 const LandingPage = () => {
     usePageTitle('Welcome to HaxoAcademy');
     const navigate = useNavigate();
     const { courses } = useCourse();
+    const { user } = useAuth();
     const [activeFaq, setActiveFaq] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -55,8 +57,17 @@ const LandingPage = () => {
                             <Link to="/courses" className="hover:text-indigo-600 transition-colors">Marketplace</Link>
                         </div>
                         <div className="hidden md:flex gap-4 items-center">
-                            <Link to="/login" className="text-sm font-semibold text-gray-700 hover:text-indigo-600 px-4">Log in</Link>
-                            <Link to="/register" className="bg-gray-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg hover:shadow-indigo-500/25 active:scale-95">Join Now</Link>
+                            {user ? (
+                                <Link to="/dashboard" className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-5 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-100 transition-all border border-indigo-100">
+                                    <FaUserCircle size={18} />
+                                    <span>Hi, {user.name.split(' ')[0]}</span>
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link to="/login" className="text-sm font-semibold text-gray-700 hover:text-indigo-600 px-4">Log in</Link>
+                                    <Link to="/register" className="bg-gray-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg hover:shadow-indigo-500/25 active:scale-95">Join Now</Link>
+                                </>
+                            )}
                         </div>
 
                         {/* Mobile Toggle */}
@@ -75,8 +86,16 @@ const LandingPage = () => {
                             <a href="#faq" onClick={toggleMenu} className="py-2 hover:text-indigo-600">FAQ</a>
                             <Link to="/courses" onClick={toggleMenu} className="py-2 hover:text-indigo-600">Marketplace</Link>
                             <hr className="border-gray-100 my-2" />
-                            <Link to="/login" onClick={toggleMenu} className="py-2 text-gray-500 hover:text-indigo-600">Log in</Link>
-                            <Link to="/register" onClick={toggleMenu} className="py-3 bg-gray-900 text-white rounded-xl shadow-lg hover:bg-indigo-600 active:scale-95 transition-all">Join HaxoAcademy</Link>
+                            {user ? (
+                                <Link to="/dashboard" onClick={toggleMenu} className="py-3 bg-indigo-600 text-white rounded-xl shadow-lg flex items-center justify-center gap-2">
+                                    <FaUserCircle /> Hi, {user.name}
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link to="/login" onClick={toggleMenu} className="py-2 text-gray-500 hover:text-indigo-600">Log in</Link>
+                                    <Link to="/register" onClick={toggleMenu} className="py-3 bg-gray-900 text-white rounded-xl shadow-lg hover:bg-indigo-600 active:scale-95 transition-all">Join HaxoAcademy</Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}

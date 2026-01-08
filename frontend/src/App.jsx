@@ -119,6 +119,7 @@ const DashboardRedirect = () => {
   const { user } = useAuth();
   if (user?.role === 'admin') return <AdminDashboard />;
   if (user?.role === 'instructor') return <InstructorDashboard />;
+  if (user?.role === 'student') return <Navigate to="/student/progress" />;
   return <Navigate to="/" />;
 };
 

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { FaGraduationCap, FaChalkboardTeacher, FaArrowRight, FaFingerprint } from 'react-icons/fa';
+import { FaGraduationCap, FaChalkboardTeacher, FaArrowRight, FaFingerprint, FaEye, FaEyeSlash } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
 
 const RegisterPage = () => {
-    usePageTitle('Join | HaxoAcademy');
+    usePageTitle('Register | HaxoAcademy');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState('student');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -156,15 +157,24 @@ const RegisterPage = () => {
                             </div>
 
                             <div className="group">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-3 ml-2 group-focus-within:text-indigo-600 transition-colors">Security Key</label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-8 py-5 rounded-3xl bg-gray-50 border-2 border-transparent focus:border-indigo-600/10 focus:bg-white outline-none transition-all font-bold text-gray-900 placeholder-gray-300 shadow-sm"
-                                    placeholder="Create a strong key"
-                                    required
-                                />
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-3 ml-2 group-focus-within:text-indigo-600 transition-colors">System Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-8 py-5 rounded-3xl bg-gray-50 border-2 border-transparent focus:border-indigo-600/10 focus:bg-white outline-none transition-all font-bold text-gray-900 placeholder-gray-300 shadow-sm pr-16"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                                    >
+                                        {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
