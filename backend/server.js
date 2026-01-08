@@ -20,8 +20,25 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 // Health Check Route (Before Tenant Middleware)
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV, mongo: mongoose.connection.readyState });
+app.get('/api/health', async (req, res) => {
+    try {
+        if (mongoose.connection.readyState === 0) {
+            await connectDB();
+        }
+        res.json({
+            status: 'ok',
+            timestamp: new Date(),
+            env: process.env.NODE_ENV,
+            mongo: mongoose.connection.readyState,
+            mongoUriSet: !!process.env.MONGO_URI
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 });
 
 const { tenantHandler } = require('./middleware/tenantMiddleware');
