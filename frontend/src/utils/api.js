@@ -22,10 +22,10 @@ api.interceptors.request.use(
         const parts = host.split('.');
         let subdomain = localStorage.getItem('tenant_subdomain');
 
-        if (parts.length > 2) {
+        if (parts.length > 2 && !host.includes('vercel.app')) {
             subdomain = parts[0];
         } else if (!subdomain) {
-            subdomain = 'haxo'; // Default to haxo for your demo
+            subdomain = 'haxo';
         }
         config.headers['X-Tenant-Subdomain'] = subdomain;
 

@@ -46,7 +46,8 @@ app.get('/api/health', async (req, res) => {
         timestamp: new Date(),
         env: process.env.NODE_ENV,
         mongo: mongoose.connection.readyState,
-        mongoUriSet: !!process.env.MONGO_URI
+        mongoUriSet: !!process.env.MONGO_URI,
+        jwtSecretSet: !!process.env.JWT_SECRET
     });
 });
 
