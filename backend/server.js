@@ -12,10 +12,18 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 // CORS Configuration
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || '*', // Allow specific origin in production
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Subdomain', 'X-Tenant-Id'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+// Health Check Route (Before Tenant Middleware)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV, mongo: mongoose.connection.readyState });
+});
+
 const { tenantHandler } = require('./middleware/tenantMiddleware');
 app.use(tenantHandler);
 
@@ -75,7 +83,7 @@ app.use(async (req, res, next) => {
         next();
     } catch (error) {
         console.error("Database connection failure:", error);
-        res.status(500).json({ message: "Database connection failed. Ensure MongoDB is running." });
+        res.status(500).json({ message: "Database connection failed.", error: error.message });
     }
 });
 

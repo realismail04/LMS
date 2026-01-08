@@ -19,7 +19,7 @@
             "destination": "/backend/server.js"
         },
         {
-            "source": "/(.*)",
+            "source": "/((?!assets/|favicon.ico|manifest.json).*)",
             "destination": "/index.html"
         }
     ]
