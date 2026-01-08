@@ -25,7 +25,7 @@ api.interceptors.request.use(
         if (parts.length > 2) {
             subdomain = parts[0];
         } else if (!subdomain) {
-            subdomain = 'academy'; // Default to acadmey for your demo
+            subdomain = 'haxo'; // Default to haxo for your demo
         }
         config.headers['X-Tenant-Subdomain'] = subdomain;
 

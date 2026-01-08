@@ -46,7 +46,8 @@ const connectDB = async () => {
             // Seed data only if we are connected and it's a fresh DB
             try {
                 const userCount = await mongoose.model('User').countDocuments();
-                if (userCount === 0) {
+                const tenantCount = await mongoose.model('Tenant').countDocuments();
+                if (userCount === 0 || tenantCount === 0) {
                     await seedAllData();
                 }
             } catch (seedError) {
@@ -74,7 +75,7 @@ app.use(async (req, res, next) => {
         next();
     } catch (error) {
         console.error("Database connection failure:", error);
-        res.status(500).json({ message: "Database Config Error" });
+        res.status(500).json({ message: "Database connection failed. Ensure MongoDB is running." });
     }
 });
 
