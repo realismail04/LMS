@@ -43,7 +43,19 @@ const seedAllData = async () => {
         }
         console.log('Instructors ready.');
 
-        // 3. Create Students
+        // 3. Create Admin
+        const adminData = {
+            name: 'Haxo Admin',
+            email: 'admin@haxotech.com',
+            password: 'password123',
+            role: 'admin',
+            tenant: tenant._id
+        };
+        let adminUser = await User.findOne({ email: adminData.email });
+        if (!adminUser) adminUser = await User.create(adminData);
+        console.log('Admin ready.');
+
+        // 4. Create Students
         const students = [];
         for (let i = 1; i <= 15; i++) {
             const email = `student${i}@haxotech.com`;

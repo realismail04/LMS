@@ -34,12 +34,11 @@ Students can enroll in courses, track their progress, and view their certificate
 ---
 
 ## 🔑 Admin Access
-Currently, there is no pre-seeded Admin account. 
+Admins have full control over the platform, including managing organizations (tenants) and global settings.
 
-To create an Admin:
-1.  Go to the [Registration Page](https://lms-five-peach.vercel.app/register).
-2.  Register a new account.
-3.  Manually change the `role` to `admin` in your MongoDB database for that user.
+| Name | Email | Role |
+| :--- | :--- | :--- |
+| Haxo Admin | `admin@haxotech.com` | Admin |
 
 ---
 

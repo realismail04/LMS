@@ -82,7 +82,10 @@ const connectDB = async () => {
             try {
                 const userCount = await mongoose.model('User').countDocuments();
                 const tenantCount = await mongoose.model('Tenant').countDocuments();
-                if (userCount === 0 || tenantCount === 0) {
+                const adminExists = await mongoose.model('User').findOne({ role: 'admin' });
+
+                if (userCount === 0 || tenantCount === 0 || !adminExists) {
+                    console.log('Admin missing or DB empty. Running seeder...');
                     await seedAllData();
                 }
             } catch (seedError) {
