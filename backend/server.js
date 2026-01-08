@@ -22,41 +22,61 @@ app.use(tenantHandler);
 const { seedAllData } = require('./seed_data');
 
 // Database Connection
+let cached = global.mongoose;
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-    try {
-        let uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lms_db';
-
-        console.log("Attempting to connect to DB...");
-
-        // Only use MongoMemoryServer if MONGO_URI is NOT specified in .env
-        if (!process.env.MONGO_URI) {
-            try {
-                const { MongoMemoryServer } = require('mongodb-memory-server');
-                console.log("No MONGO_URI found. Starting MongoMemoryServer setup...");
-                const mongod = await MongoMemoryServer.create();
-                uri = mongod.getUri();
-                console.log(`Using In-Memory MongoDB: ${uri}`);
-            } catch (msError) {
-                console.log("MongoMemoryServer not available, using default local URI.");
-            }
-        }
-
-        console.log(`Connecting to Mongoose URI: ${uri}`);
-        await mongoose.connect(uri);
-        console.log('MongoDB Connected');
-
-        // Auto-seed data on startup if database is empty
-        const userCount = await mongoose.model('User').countDocuments();
-        if (userCount === 0) {
-            await seedAllData();
-        }
-    } catch (err) {
-        console.error('MongoDB Connection Error:', err);
-        process.exit(1);
+    if (cached.conn) {
+        return cached.conn;
     }
+
+    if (!cached.promise) {
+        const opts = {
+            bufferCommands: false, // Disable buffering to fail fast if not connected
+        };
+
+        const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lms_db';
+        console.log(`Connecting to Mongoose URI: ${uri}`);
+
+        cached.promise = mongoose.connect(uri, opts).then(async (mongoose) => {
+            console.log('MongoDB Connected');
+
+            // Seed data only if we are connected and it's a fresh DB
+            try {
+                const userCount = await mongoose.model('User').countDocuments();
+                if (userCount === 0) {
+                    await seedAllData();
+                }
+            } catch (seedError) {
+                console.error("Seeding error:", seedError);
+            }
+
+            return mongoose;
+        });
+    }
+
+    try {
+        cached.conn = await cached.promise;
+    } catch (e) {
+        cached.promise = null;
+        throw e;
+    }
+
+    return cached.conn;
 };
 
-connectDB();
+// Ensure DB is connected for every request (Middleware)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("Database connection failure:", error);
+        res.status(500).json({ message: "Database Config Error" });
+    }
+});
 
 // Routes
 app.use('/api/tenants', require('./routes/tenantRoutes'));
