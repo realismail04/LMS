@@ -52,7 +52,8 @@ const RegisterPage = () => {
                 navigate('/');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Academic registration failed');
+            console.error("Registration Error:", err);
+            setError(err.response?.data?.message || err.message || 'Academic registration failed');
         } finally {
             setLoading(false);
         }
