@@ -1,5 +1,8 @@
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
+const Certificate = require('../models/Certificate');
+const Submission = require('../models/Submission');
+const crypto = require('crypto');
 
 // @desc    Enroll in a course
 // @route   POST /api/enrollments
@@ -12,10 +15,26 @@ const enrollInCourse = async (req, res) => {
             return res.status(400).json({ message: 'Tenant context required' });
         }
 
-        const course = await Course.findOne({ _id: courseId, tenant: req.tenant._id });
+        const course = await Course.findOne({ _id: courseId, tenant: req.tenant._id }).populate('prerequisites');
         if (!course) {
             res.status(404).json({ message: 'Course not found in this organization' });
             return;
+        }
+
+        // Check prerequisites
+        if (course.prerequisites && course.prerequisites.length > 0) {
+            const completedEnrollments = await Enrollment.find({
+                user: req.user.id,
+                course: { $in: course.prerequisites.map(p => p._id) },
+                completed: true
+            });
+
+            if (completedEnrollments.length < course.prerequisites.length) {
+                return res.status(400).json({
+                    message: 'You must complete the prerequisites before enrolling in this course.',
+                    prerequisites: course.prerequisites.map(p => p.title)
+                });
+            }
         }
 
         // Check if already enrolled
@@ -101,6 +120,18 @@ const updateProgress = async (req, res) => {
             // Check if course completed
             if (enrollment.progress === 100) {
                 enrollment.completed = true;
+
+                // Generate Certificate
+                const existingCert = await Certificate.findOne({ user: req.user.id, course: courseId });
+                if (!existingCert) {
+                    const certificateId = `CERT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+                    await Certificate.create({
+                        user: req.user.id,
+                        course: courseId,
+                        certificateId,
+                        tenant: req.tenant._id
+                    });
+                }
             }
 
             await enrollment.save();
@@ -167,10 +198,55 @@ const getInstructorEnrollments = async (req, res) => {
     }
 };
 
+// @desc    Get my certificates
+// @route   GET /api/enrollments/my/certificates
+const getMyCertificates = async (req, res) => {
+    try {
+        const certificates = await Certificate.find({ user: req.user.id })
+            .populate('course', 'title image')
+            .populate('user', 'name email');
+        res.json(certificates);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get course certificate
+// @route   GET /api/enrollments/:courseId/certificate
+const getCourseCertificate = async (req, res) => {
+    try {
+        const certificate = await Certificate.findOne({
+            user: req.user.id,
+            course: req.params.courseId
+        }).populate('course', 'title image').populate('user', 'name email');
+
+        if (!certificate) return res.status(404).json({ message: 'Certificate not found' });
+        res.json(certificate);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get my submissions
+// @route   GET /api/enrollments/my/submissions
+const getMySubmissions = async (req, res) => {
+    try {
+        const submissions = await Submission.find({ user: req.user.id })
+            .populate('course', 'title')
+            .sort({ createdAt: -1 });
+        res.json(submissions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     enrollInCourse,
     getMyEnrollments,
     updateProgress,
     getInstructorStats,
-    getInstructorEnrollments
+    getInstructorEnrollments,
+    getMyCertificates,
+    getCourseCertificate,
+    getMySubmissions
 };

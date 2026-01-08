@@ -115,6 +115,7 @@ app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/enrollments', require('./routes/enrollmentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

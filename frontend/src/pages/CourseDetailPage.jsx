@@ -6,7 +6,8 @@ import { useCourse } from '../context/CourseContext';
 import {
     FaArrowLeft, FaPlay, FaGraduationCap, FaClock, FaChartLine,
     FaGlobe, FaCertificate, FaChevronDown, FaChevronUp,
-    FaLock, FaCheckCircle, FaStar, FaCreditCard, FaFileAlt, FaHourglassHalf
+    FaLock, FaCheckCircle, FaStar, FaCreditCard, FaFileAlt, FaHourglassHalf,
+    FaExclamationTriangle
 } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
 
@@ -20,10 +21,14 @@ const CourseDetailPage = () => {
     const [openModules, setOpenModules] = useState({});
     const [paymentModal, setPaymentModal] = useState(false);
 
-    // Payment Form State
+    // Payment/Review State
     const [transactionId, setTransactionId] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
     const [submitting, setSubmitting] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState('');
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
     usePageTitle(course?.title || 'Academy Course');
 
@@ -38,8 +43,12 @@ const CourseDetailPage = () => {
                 if (data.modules?.length > 0) {
                     setOpenModules({ [data.modules[0]._id]: true });
                 }
+
+                // Fetch Reviews
+                const reviewData = await api.get(`/reviews/${courseId}`);
+                setReviews(reviewData.data);
             } catch (error) {
-                console.error("Failed to fetch course", error);
+                console.error("Failed to fetch course data", error);
             } finally {
                 setLoading(false);
             }
@@ -53,7 +62,6 @@ const CourseDetailPage = () => {
 
     const handleEnrollment = async () => {
         if (!user) {
-            // Store the current course URL as a redirect parameter
             navigate(`/login?redirect=/courses/${courseId}`);
             return;
         }
@@ -81,13 +89,32 @@ const CourseDetailPage = () => {
                 paymentMethod,
                 amount: course.price
             });
-            await fetchOrders(); // Update global context
+            await fetchOrders();
             setPaymentModal(false);
-            // Non-blocking notification or simple success state is preferred over alert for "sleek" UI
+            alert('Payment submitted for verification!');
         } catch (error) {
             alert(error.response?.data?.message || 'Submission failed');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        setReviewSubmitting(true);
+        try {
+            const { data } = await api.post('/reviews', {
+                courseId,
+                rating: reviewRating,
+                comment: reviewComment
+            });
+            setReviews([data, ...reviews]);
+            setReviewComment('');
+            alert('Review submitted successfully!');
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to submit review');
+        } finally {
+            setReviewSubmitting(false);
         }
     };
 
@@ -125,6 +152,22 @@ const CourseDetailPage = () => {
                                 {course.description}
                             </p>
 
+                            {/* Prerequisites Section */}
+                            {course.prerequisites?.length > 0 && (
+                                <div className="mb-10 p-6 bg-amber-500/10 rounded-3xl border border-amber-500/20 animate-fade-up">
+                                    <h3 className="text-amber-500 font-black flex items-center gap-2 mb-3 uppercase tracking-widest text-[10px]">
+                                        <FaExclamationTriangle className="text-amber-500" /> Prerequisites Required
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {course.prerequisites.map(p => (
+                                            <div key={p._id} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-amber-200">
+                                                {p.title}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex flex-wrap gap-10">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-indigo-400 border border-white/10">
@@ -159,12 +202,9 @@ const CourseDetailPage = () => {
                 </div>
             </div>
 
-            {/* Main Content & Sticky Card */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-40 relative z-20">
                 <div className="flex flex-col lg:flex-row gap-12">
-                    {/* Content Column */}
                     <div className="flex-1 space-y-12">
-                        {/* What you will learn */}
                         <div className="bg-white rounded-[48px] p-12 shadow-2xl shadow-gray-200/50 border border-gray-100 animate-fade-up">
                             <h2 className="text-3xl font-extrabold tracking-tighter mb-10 uppercase italic text-gray-900">Mastery Objectives</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -182,17 +222,16 @@ const CourseDetailPage = () => {
                             </div>
                         </div>
 
-                        {/* Curriculum */}
                         <div className="bg-white rounded-[48px] p-12 shadow-2xl shadow-gray-200/50 border border-gray-100 animate-fade-up delay-100">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
                                 <h2 className="text-3xl font-extrabold tracking-tighter uppercase italic text-gray-900">Curriculum Blueprint</h2>
                                 <span className="font-bold text-gray-300 text-[10px] uppercase tracking-[0.3em] bg-gray-50 px-4 py-2 rounded-full">
-                                    {course.modules?.length} Phases • {course.modules.reduce((acc, m) => acc + m.lessons.length, 0)} Units
+                                    {course.modules?.length} Phases • {course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)} Units
                                 </span>
                             </div>
 
                             <div className="space-y-6">
-                                {course.modules.map((module) => (
+                                {course.modules?.map((module, mIdx) => (
                                     <div key={module._id} className="border border-gray-100 rounded-[32px] overflow-hidden bg-gray-50/50 hover:border-indigo-200 transition-colors">
                                         <button
                                             onClick={() => toggleModule(module._id)}
@@ -200,7 +239,7 @@ const CourseDetailPage = () => {
                                         >
                                             <div className="flex items-center gap-6">
                                                 <div className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center font-bold text-xs uppercase shadow-lg">
-                                                    P{course.modules.indexOf(module) + 1}
+                                                    P{mIdx + 1}
                                                 </div>
                                                 <span className="text-xl font-bold tracking-tight uppercase italic text-gray-900">{module.title}</span>
                                             </div>
@@ -211,7 +250,7 @@ const CourseDetailPage = () => {
 
                                         {openModules[module._id] && (
                                             <div className="p-6 space-y-3">
-                                                {module.lessons.map((lesson) => (
+                                                {module.lessons?.map((lesson) => (
                                                     <div key={lesson._id} className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl group hover:border-indigo-600/30 transition-all">
                                                         <div className="flex items-center gap-5">
                                                             <div className="text-gray-300 group-hover:text-indigo-600 transition-colors">
@@ -231,9 +270,84 @@ const CourseDetailPage = () => {
                                 ))}
                             </div>
                         </div>
+
+                        <div className="bg-white rounded-[48px] p-12 shadow-2xl shadow-gray-200/50 border border-gray-100 animate-fade-up delay-200">
+                            <div className="flex items-center justify-between mb-12">
+                                <h2 className="text-3xl font-extrabold tracking-tighter uppercase italic text-gray-900">Student Intelligence</h2>
+                                <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <FaStar className="text-yellow-400" />
+                                    <span className="text-xl font-black text-gray-900">{course.rating?.toFixed(1) || '0.0'}</span>
+                                    <span className="text-xs font-bold text-gray-400">({course.numReviews || 0} reviews)</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-8">
+                                {isEnrolled && !reviews.some(r => r.user?._id === user?._id) && (
+                                    <form onSubmit={handleReviewSubmit} className="p-8 bg-gray-50 rounded-[32px] border border-gray-100 mb-12">
+                                        <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 italic">Broadcast Your Experience</h4>
+                                        <div className="flex items-center gap-2 mb-6 text-2xl">
+                                            {[1, 2, 3, 4, 5].map(num => (
+                                                <button
+                                                    key={num}
+                                                    type="button"
+                                                    onClick={() => setReviewRating(num)}
+                                                    className={`${reviewRating >= num ? 'text-yellow-400' : 'text-gray-200'} transition-transform hover:scale-125`}
+                                                >
+                                                    <FaStar />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <textarea
+                                            value={reviewComment}
+                                            onChange={(e) => setReviewComment(e.target.value)}
+                                            placeholder="Write your review here..."
+                                            className="w-full px-6 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-100 outline-none h-32 mb-4 font-medium"
+                                            required
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={reviewSubmitting}
+                                            className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
+                                        >
+                                            {reviewSubmitting ? 'Transmitting...' : 'Post Review'}
+                                        </button>
+                                    </form>
+                                )}
+
+                                {reviews.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {reviews.map(review => (
+                                            <div key={review._id} className="p-8 border border-gray-100 rounded-[32px] bg-white group hover:border-indigo-100 transition-all">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-gray-100 ring-4 ring-gray-50 overflow-hidden">
+                                                            <img src={`https://i.pravatar.cc/150?u=${review.user?._id || review.user}`} alt="User" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-black text-gray-900 uppercase tracking-tight">{review.user?.name || 'Anonymous Learner'}</div>
+                                                            <div className="flex gap-1 text-[10px] text-yellow-400 mt-0.5">
+                                                                {[...Array(review.rating)].map((_, i) => <FaStar key={i} />)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-gray-300 uppercase italic">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="text-gray-500 text-sm font-medium leading-relaxed italic line-clamp-3 group-hover:line-clamp-none transition-all">
+                                                    "{review.comment}"
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20 bg-gray-50 rounded-[48px] border-4 border-dashed border-gray-100">
+                                        <div className="text-gray-200 mb-4 flex justify-center"><FaStar size={48} /></div>
+                                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No intelligence reports received yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Floating Pricing Card */}
                     <div className="w-full lg:w-[400px] animate-fade-up delay-200">
                         <div className="lg:sticky lg:top-32 bg-white rounded-[48px] shadow-[0_80px_160px_-40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden transform hover:scale-[1.02] transition-all duration-500">
                             <div className="relative aspect-video group cursor-pointer">
@@ -305,7 +419,7 @@ const CourseDetailPage = () => {
                 </div>
             </div>
 
-            {/* Payment / Waitlist Modal */}
+            {/* Payment Modal */}
             {paymentModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-md" onClick={() => !submitting && setPaymentModal(false)} />
@@ -319,26 +433,6 @@ const CourseDetailPage = () => {
                                 Secure your spot at **HaxoAcademy**. Complete the transfer of **${course.price}** to join the intensive learning waitlist.
                             </p>
                         </div>
-
-                        <div className="bg-gray-950 p-10 rounded-[40px] mb-12 border border-white/5 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-                            <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.4em] mb-6">Master Haxo Accounts</div>
-                            <div className="space-y-4 font-bold text-sm text-white tracking-widest uppercase italic">
-                                <div className="flex justify-between border-b border-white/5 pb-3">
-                                    <span className="text-gray-500">Entity:</span>
-                                    <span className="text-indigo-500">HaxoTech Global Bank</span>
-                                </div>
-                                <div className="flex justify-between border-b border-white/5 pb-3">
-                                    <span className="text-gray-500">Account:</span>
-                                    <span className="text-white text-xl tracking-[0.2em] font-mono not-italic">8899-0011-2233</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">BIC:</span>
-                                    <span className="text-white">HAXO-GLOBAL-HQ</span>
-                                </div>
-                            </div>
-                        </div>
-
                         <form onSubmit={handlePaymentSubmit} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
@@ -365,25 +459,10 @@ const CourseDetailPage = () => {
                                     />
                                 </div>
                             </div>
-
                             <div className="flex gap-4 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentModal(false)}
-                                    className="flex-1 py-6 bg-gray-50 text-gray-400 rounded-2xl font-bold hover:bg-gray-100 transition-all uppercase tracking-widest text-xs"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="flex-[2] py-6 bg-indigo-600 text-white rounded-3xl font-bold hover:bg-indigo-700 shadow-2xl shadow-indigo-500/30 transition-all flex items-center justify-center gap-3 active:scale-95 uppercase italic"
-                                >
-                                    {submitting ? (
-                                        <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        'Submit Admission'
-                                    )}
+                                <button type="button" onClick={() => setPaymentModal(false)} className="flex-1 py-6 bg-gray-50 text-gray-400 rounded-2xl font-bold uppercase tracking-widest text-xs">Cancel</button>
+                                <button type="submit" disabled={submitting} className="flex-[2] py-6 bg-indigo-600 text-white rounded-3xl font-bold hover:bg-indigo-700 shadow-2xl transition-all flex items-center justify-center gap-3">
+                                    {submitting ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : 'Submit Admission'}
                                 </button>
                             </div>
                         </form>

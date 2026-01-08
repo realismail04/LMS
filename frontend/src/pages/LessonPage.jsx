@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCourse } from '../context/CourseContext';
-import { FaPlayCircle, FaCheckCircle, FaArrowLeft, FaBars } from 'react-icons/fa';
+import { FaPlayCircle, FaCheckCircle, FaArrowLeft, FaBars, FaLock, FaCalendarAlt } from 'react-icons/fa';
 import QuizView from '../components/QuizView';
 import AssignmentView from '../components/AssignmentView';
 import api from '../utils/api';
@@ -130,7 +130,21 @@ const LessonPage = () => {
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto bg-gray-900 flex flex-col items-center">
-                    {activeLesson.type === 'quiz' ? (
+                    {activeLesson.isLocked ? (
+                        <div className="flex flex-col items-center justify-center h-full max-w-2xl px-8 text-center animate-fade-up">
+                            <div className="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-500 mb-8 border border-indigo-500/20 shadow-2xl shadow-indigo-500/20">
+                                <FaLock size={40} />
+                            </div>
+                            <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter italic">Locked by Chronos</h2>
+                            <p className="text-gray-400 text-lg font-medium leading-relaxed mb-8">
+                                This lesson is part of our <span className="text-indigo-400">Drip Curriculum</span>. It will unlock <span className="text-white font-bold">{activeLesson.unlockDays} days</span> after your enrollment to ensure optimal knowledge retention.
+                            </p>
+                            <div className="flex items-center gap-3 px-6 py-3 bg-gray-800 rounded-2xl border border-gray-700 text-sm font-bold text-gray-400">
+                                <FaCalendarAlt className="text-indigo-400" />
+                                Estimated Unlock: {new Date(new Date(enrollment.createdAt).getTime() + (activeLesson.unlockDays * 24 * 60 * 60 * 1000)).toLocaleDateString()}
+                            </div>
+                        </div>
+                    ) : activeLesson.type === 'quiz' ? (
                         <div className="py-10 px-4 w-full flex justify-center">
                             <QuizView
                                 courseId={courseId}
@@ -271,6 +285,7 @@ const LessonPage = () => {
                                                 <div className="flex items-center mt-1 text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
                                                     <span className={`mr-2 ${lesson.type === 'text' ? 'text-blue-400' : 'text-purple-400'}`}>{lesson.type || 'video'}</span>
                                                     <span>{lesson.duration || '0:00'}</span>
+                                                    {lesson.isLocked && <FaLock className="ml-2 text-indigo-500 animate-pulse" />}
                                                 </div>
                                             </div>
                                         </button>

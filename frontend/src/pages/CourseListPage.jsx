@@ -11,6 +11,7 @@ const CourseListPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [priceFilter, setPriceFilter] = useState('All');
+    const [levelFilter, setLevelFilter] = useState('All');
 
     const categories = ['All', ...new Set(courses.map(c => c.category))];
 
@@ -21,7 +22,8 @@ const CourseListPage = () => {
         const matchesPrice = priceFilter === 'All' ||
             (priceFilter === 'Free' && course.price === 0) ||
             (priceFilter === 'Paid' && course.price > 0);
-        return matchesSearch && matchesCategory && matchesPrice;
+        const matchesLevel = levelFilter === 'All' || course.level === levelFilter.toLowerCase();
+        return matchesSearch && matchesCategory && matchesPrice && matchesLevel;
     });
 
     if (loading) return (
@@ -39,14 +41,24 @@ const CourseListPage = () => {
                     <span className="text-indigo-600 font-black tracking-widest uppercase text-xs mb-4 block">Knowledge Marketplace</span>
                     <h1 className="text-5xl font-black tracking-tighter text-gray-900 leading-none">Find Your Next Skill</h1>
                 </div>
-                <div className="bg-white p-2 rounded-2xl flex gap-1 shadow-sm border border-gray-100">
+                <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                     {['All', 'Free', 'Paid'].map(p => (
                         <button
                             key={p}
                             onClick={() => setPriceFilter(p)}
-                            className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${priceFilter === p ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+                            className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${priceFilter === p ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                             {p}
+                        </button>
+                    ))}
+                    <div className="w-px h-8 bg-gray-100 mx-2" />
+                    {['All', 'Beginner', 'Intermediate', 'Advanced'].map(l => (
+                        <button
+                            key={l}
+                            onClick={() => setLevelFilter(l)}
+                            className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${levelFilter === l ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+                        >
+                            {l}
                         </button>
                     ))}
                 </div>

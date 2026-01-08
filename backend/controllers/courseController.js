@@ -10,7 +10,26 @@ const Order = require('../models/Order');
 const getCourses = async (req, res) => {
     try {
         if (!req.tenant) return res.status(400).json({ message: 'Tenant context required' });
-        const courses = await Course.find({ tenant: req.tenant._id });
+
+        const { keyword, category, level } = req.query;
+        let query = { tenant: req.tenant._id };
+
+        if (keyword) {
+            query.$or = [
+                { title: { $regex: keyword, $options: 'i' } },
+                { description: { $regex: keyword, $options: 'i' } }
+            ];
+        }
+
+        if (category) {
+            query.category = category;
+        }
+
+        if (level) {
+            query.level = level;
+        }
+
+        const courses = await Course.find(query);
         res.json(courses);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -25,7 +44,33 @@ const getCourse = async (req, res) => {
         if (!req.tenant) return res.status(400).json({ message: 'Tenant context required' });
         const course = await Course.findOne({ _id: req.params.id, tenant: req.tenant._id });
         if (course) {
-            res.json(course);
+            // Drip Content calculation
+            let lessonsWithStatus = [];
+            const enrollment = await Enrollment.findOne({ user: req.user?.id, course: course._id });
+
+            const processLesson = (lesson) => {
+                let isLocked = false;
+                if (lesson.isDrip && enrollment) {
+                    const daysSinceEnrollment = Math.floor((new Date() - new Date(enrollment.createdAt)) / (1000 * 60 * 60 * 24));
+                    if (daysSinceEnrollment < (lesson.unlockDays || 0)) {
+                        isLocked = true;
+                    }
+                }
+                return { ...lesson.toObject(), isLocked };
+            };
+
+            const updatedModules = course.modules.map(module => ({
+                ...module.toObject(),
+                lessons: module.lessons.map(processLesson)
+            }));
+
+            const updatedLessons = course.lessons.map(processLesson);
+
+            const result = course.toObject();
+            result.modules = updatedModules;
+            result.lessons = updatedLessons;
+
+            res.json(result);
         } else {
             res.status(404).json({ message: 'Course not found' });
         }

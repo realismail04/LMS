@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import { FaChartBar, FaCheckCircle, FaClock, FaExclamationCircle, FaStar, FaArrowRight, FaAward, FaBookOpen } from 'react-icons/fa';
+import { FaChartBar, FaCheckCircle, FaClock, FaExclamationCircle, FaStar, FaArrowRight, FaAward, FaBookOpen, FaTimes } from 'react-icons/fa';
 import { useCourse } from '../../context/CourseContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import usePageTitle from '../../hooks/usePageTitle';
+import CertificateView from '../../components/CertificateView';
 
 const ProgressPage = () => {
     usePageTitle('My Progress');
     const { enrollments, loading: enrollmentLoading } = useCourse();
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedCert, setSelectedCert] = useState(null);
+    const [certificates, setCertificates] = useState([]);
 
     useEffect(() => {
         fetchSubmissions();
+        fetchCertificates();
     }, []);
 
     const fetchSubmissions = async () => {
@@ -23,6 +27,15 @@ const ProgressPage = () => {
             console.error("Failed to fetch submissions", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchCertificates = async () => {
+        try {
+            const { data } = await api.get('/courses/my/certificates');
+            setCertificates(data);
+        } catch (err) {
+            console.error("Failed to fetch certificates", err);
         }
     };
 
@@ -111,6 +124,18 @@ const ProgressPage = () => {
                                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                                     <div className="bg-indigo-500 h-full rounded-full transition-all duration-1000" style={{ width: `${enr.progress}%` }} />
                                 </div>
+
+                                {enr.progress === 100 && (
+                                    <button
+                                        onClick={() => {
+                                            const cert = certificates.find(c => (c.course?._id || c.course) === (enr.course?._id || enr.course));
+                                            setSelectedCert(cert || { course: enr.course, user: { name: 'Academic Scholar' } });
+                                        }}
+                                        className="mt-6 w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <FaAward /> View Certificate
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -160,6 +185,27 @@ const ProgressPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Certificate Modal */}
+            {selectedCert && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-xl" onClick={() => setSelectedCert(null)} />
+                    <button
+                        onClick={() => setSelectedCert(null)}
+                        className="absolute top-10 right-10 z-[110] text-white hover:text-indigo-400 transition-colors p-4"
+                    >
+                        <FaTimes size={32} />
+                    </button>
+                    <div className="relative z-[110] w-full max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                        <CertificateView
+                            user={selectedCert.user}
+                            course={selectedCert.course}
+                            certificateId={selectedCert.certificateId}
+                            issuedAt={selectedCert.issuedAt || selectedCert.createdAt}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

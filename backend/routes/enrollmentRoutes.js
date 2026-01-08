@@ -6,7 +6,10 @@ const {
     getMyEnrollments,
     updateProgress,
     getInstructorStats,
-    getInstructorEnrollments
+    getInstructorEnrollments,
+    getMyCertificates,
+    getCourseCertificate,
+    getMySubmissions
 } = require('../controllers/enrollmentController');
 
 router.route('/')
@@ -14,6 +17,15 @@ router.route('/')
 
 router.route('/my')
     .get(protect, getMyEnrollments);
+
+router.route('/my/certificates')
+    .get(protect, getMyCertificates);
+
+router.route('/my/submissions')
+    .get(protect, getMySubmissions);
+
+router.route('/:courseId/certificate')
+    .get(protect, getCourseCertificate);
 
 router.route('/instructor/stats')
     .get(protect, instructor, getInstructorStats);

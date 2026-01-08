@@ -14,7 +14,16 @@ const lessonSchema = mongoose.Schema({
         name: { type: String },
         url: { type: String }
     }],
-    quizData: { type: mongoose.Schema.Types.Mixed }, // Placeholder for quiz structure
+    quizData: {
+        questions: [{
+            question: String,
+            options: [String],
+            correctAnswer: Number, // Index of the correct option
+            explanation: String
+        }]
+    },
+    isDrip: { type: Boolean, default: false },
+    unlockDays: { type: Number, default: 0 }, // Days after enrollment to unlock
 }, { timestamps: true });
 
 const moduleSchema = mongoose.Schema({
@@ -60,6 +69,10 @@ const courseSchema = mongoose.Schema({
         enum: ['beginner', 'intermediate', 'advanced'],
         default: 'beginner'
     },
+    prerequisites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course'
+    }],
     modules: [moduleSchema],
     // Legacy support for backward compatibility during transition
     lessons: [lessonSchema],
