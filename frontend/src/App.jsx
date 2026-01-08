@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import LessonPage from './pages/LessonPage';
+import TeachersPage from './pages/TeachersPage';
 
 // Instructor Pages
 import InstructorDashboard from './pages/instructor/InstructorDashboard';
@@ -46,6 +47,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/courses" element={<CourseListPage />} />
         <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+        <Route path="/teachers" element={<TeachersPage />} />
 
         {/* Dashboard (Dynamic Redirect based on role) */}
         <Route path="/dashboard" element={

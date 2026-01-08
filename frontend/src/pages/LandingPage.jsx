@@ -53,6 +53,7 @@ const LandingPage = () => {
                         <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
                             <a href="#courses" className="hover:text-indigo-600 transition-colors">Courses</a>
                             <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
+                            <Link to="/teachers" className="hover:text-indigo-600 transition-colors">Instructors</Link>
                             <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
                             <Link to="/courses" className="hover:text-indigo-600 transition-colors">Marketplace</Link>
                         </div>
@@ -83,6 +84,7 @@ const LandingPage = () => {
                         <div className="flex flex-col p-6 space-y-4 font-bold text-gray-900 text-center">
                             <a href="#courses" onClick={toggleMenu} className="py-2 hover:text-indigo-600">Courses</a>
                             <a href="#features" onClick={toggleMenu} className="py-2 hover:text-indigo-600">Features</a>
+                            <Link to="/teachers" onClick={toggleMenu} className="py-2 hover:text-indigo-600">Instructors</Link>
                             <a href="#faq" onClick={toggleMenu} className="py-2 hover:text-indigo-600">FAQ</a>
                             <Link to="/courses" onClick={toggleMenu} className="py-2 hover:text-indigo-600">Marketplace</Link>
                             <hr className="border-gray-100 my-2" />

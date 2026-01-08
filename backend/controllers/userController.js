@@ -77,13 +77,19 @@ const getStats = async (req, res) => {
     }
 };
 
-// @desc    Get all users across all tenants
-// @route   GET /api/users/admin/all
-// @access  Private/Admin
-const getAllUsersAcrossTenants = async (req, res) => {
+// @desc    Get all instructors for public page
+// @route   GET /api/users/instructors
+// @access  Public
+const getInstructors = async (req, res) => {
     try {
-        const users = await User.find({}).select('-password');
-        res.json(users);
+        if (!req.tenant) {
+            return res.status(400).json({ message: 'Tenant context required' });
+        }
+        const instructors = await User.find({
+            role: 'instructor',
+            tenant: req.tenant._id
+        }).select('name email avatar role');
+        res.json(instructors);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -93,5 +99,6 @@ module.exports = {
     getUsers,
     deleteUser,
     getStats,
-    getAllUsersAcrossTenants
+    getAllUsersAcrossTenants,
+    getInstructors
 };
