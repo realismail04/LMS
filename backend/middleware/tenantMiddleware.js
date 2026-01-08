@@ -16,10 +16,8 @@ const tenantHandler = async (req, res, next) => {
         // Handle Vercel deployments (e.g., lms-five-peach.vercel.app -> use default)
         // or Localhost
         if (host.includes('vercel.app') || host.includes('localhost')) {
-            // For this demo, we can assume the Vercel app is the "main" tenant
-            // OR we could check if there is a subdomain like "marketing.lms-five..." (custom domains)
-            // But for now, let's treat the root vercel app as the default tenant.
             console.log("DEBUG: Vercel/Localhost detected, using fallback tenant.");
+            subdomain = 'haxo';
         } else {
             const parts = host.split('.');
             if (parts.length > 2) {
