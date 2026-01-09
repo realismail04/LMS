@@ -64,8 +64,8 @@ const CourseListPage = () => {
                 </div>
             </div>
 
-            {/* Sticky Controls */}
-            <div className="sticky top-24 z-20 bg-white/80 backdrop-blur-xl rounded-[32px] p-6 mb-12 shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col lg:flex-row gap-6">
+            {/* Search and Filters */}
+            <div className="bg-white rounded-[32px] p-6 mb-12 shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col lg:flex-row gap-6">
                 <div className="flex-grow relative">
                     <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
