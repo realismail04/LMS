@@ -32,16 +32,19 @@ app.get('/api/header-health', (req, res) => {
 // Initialize Database Connection moved below its definition
 
 
-// Ensure DB is connected for every request (Middleware) - MOVED TO TOP
-// app.use(async (req, res, next) => {
-//     try {
-//         await connectDB();
-//         next();
-//     } catch (error) {
-//         console.error("Database connection failure:", error);
-//         res.status(500).json({ message: "Database connection failed.", error: error.message });
-//     }
-// });
+// Ensure DB is connected for every request (Middleware)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("[CRITICAL] Database connection failure:", error);
+        res.status(500).json({
+            message: "Database connection failed. Please check backend environment variables (MONGO_URI).",
+            error: error.message
+        });
+    }
+});
 
 app.get('/api/health', async (req, res) => {
     res.json({
@@ -129,8 +132,10 @@ const connectDB = async () => {
 
 
 
-// Initialize Database Connection
-connectDB().catch(err => console.error("[STARTUP] DB Initialization Error:", err));
+// Initialize Database Connection (Background startup)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    connectDB().catch(err => console.error("[STARTUP] DB Initialization Error:", err));
+}
 
 // Routes
 app.use('/api/tenants', require('./routes/tenantRoutes'));
@@ -145,9 +150,11 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
-app.listen(PORT, () => {
-    console.log(`[SERVER] HaxoAcademy API active on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`[SERVER] HaxoAcademy API active on port ${PORT}`);
+    });
+}
 
 process.on('unhandledRejection', (err) => {
     console.error(`[CRITICAL] Unhandled Promise Rejection: ${err.message}`);
