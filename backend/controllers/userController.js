@@ -99,6 +99,5 @@ module.exports = {
     getUsers,
     deleteUser,
     getStats,
-    getAllUsersAcrossTenants,
     getInstructors
 };

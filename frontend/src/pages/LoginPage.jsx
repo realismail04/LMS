@@ -142,7 +142,7 @@ const LoginPage = () => {
                                 <input id="remember" type="checkbox" className="h-4 w-4 text-indigo-600 border-gray-100 rounded-lg focus:ring-indigo-500 cursor-pointer" />
                                 <label htmlFor="remember" className="ml-3 block text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Stay Active</label>
                             </div>
-                            <a href="#" className="text-xs font-bold text-indigo-600 hover:text-indigo-500 uppercase tracking-widest">Lost Credentials?</a>
+                            <Link to="/forgot-password" disable={loading} className="text-xs font-bold text-indigo-600 hover:text-indigo-500 uppercase tracking-widest">Lost Credentials?</Link>
                         </div>
 
                         <button

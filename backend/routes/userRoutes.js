@@ -5,14 +5,13 @@ const {
     getUsers,
     deleteUser,
     getStats,
-    getAllUsersAcrossTenants,
     getInstructors
 } = require('../controllers/userController');
 
 // Public route for teachers page
 router.get('/instructors', getInstructors);
 
-router.get('/admin/all', protect, admin, getAllUsersAcrossTenants);
+
 
 router.route('/')
     .get(protect, admin, getUsers);

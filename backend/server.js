@@ -29,16 +29,19 @@ app.get('/api/header-health', (req, res) => {
     });
 });
 
+// Initialize Database Connection moved below its definition
+
+
 // Ensure DB is connected for every request (Middleware) - MOVED TO TOP
-app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (error) {
-        console.error("Database connection failure:", error);
-        res.status(500).json({ message: "Database connection failed.", error: error.message });
-    }
-});
+// app.use(async (req, res, next) => {
+//     try {
+//         await connectDB();
+//         next();
+//     } catch (error) {
+//         console.error("Database connection failure:", error);
+//         res.status(500).json({ message: "Database connection failed.", error: error.message });
+//     }
+// });
 
 app.get('/api/health', async (req, res) => {
     res.json({
@@ -72,11 +75,29 @@ const connectDB = async () => {
             bufferCommands: false, // Disable buffering to fail fast if not connected
         };
 
-        const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lms_db';
-        console.log(`Connecting to Mongoose URI: ${uri}`);
+        let uri = process.env.MONGO_URI;
+
+        // Fallback to memory server in dev if no URI provided
+        if (!uri && process.env.NODE_ENV !== 'production') {
+            try {
+                console.log('[DB] No MONGO_URI found, initializing MongoMemoryServer...');
+                const { MongoMemoryServer } = require('mongodb-memory-server');
+                const mongoServer = await MongoMemoryServer.create();
+                uri = mongoServer.getUri();
+                console.log(`[DB] Successfully started In-Memory MongoDB: ${uri}`);
+            } catch (err) {
+                console.warn('[DB] MongoMemoryServer initialization failed:', err.message);
+                console.warn('[DB] Falling back to localhost MongoDB.');
+                uri = 'mongodb://127.0.0.1:27017/lms_db';
+            }
+        } else if (!uri) {
+            uri = 'mongodb://127.0.0.1:27017/lms_db';
+        }
+
+        console.log(`[DB] Connecting to Mongoose URI: ${uri}`);
 
         cached.promise = mongoose.connect(uri, opts).then(async (mongoose) => {
-            console.log('MongoDB Connected');
+            console.log('[DB] MongoDB Connected Successfully');
 
             // Seed data only if we are connected and it's a fresh DB
             try {
@@ -108,6 +129,9 @@ const connectDB = async () => {
 
 
 
+// Initialize Database Connection
+connectDB().catch(err => console.error("[STARTUP] DB Initialization Error:", err));
+
 // Routes
 app.use('/api/tenants', require('./routes/tenantRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -121,10 +145,12 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
+app.listen(PORT, () => {
+    console.log(`[SERVER] HaxoAcademy API active on port ${PORT}`);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error(`[CRITICAL] Unhandled Promise Rejection: ${err.message}`);
+});
 
 module.exports = app;
