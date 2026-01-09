@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Row, Col, Card, Space, Badge, Progress, Button } from 'antd';
+import { Typography, Row, Col, Card, Space, Badge, Progress, Button, Divider } from 'antd';
 import { motion } from 'framer-motion';
 import { FaBolt, FaTrophy, FaFire, FaChartLine, FaCheckCircle, FaStar, FaLevelUpAlt } from 'react-icons/fa';
 
